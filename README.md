@@ -237,3 +237,7 @@ print('OK' if descomprimir(r.dados_comprimidos, r.codigos, r.bits_de_preenchimen
 
 Isso testa a compressão/descompressão isoladamente, sem subir a API nem
 precisar de um arquivo de verdade.
+
+## Vídeo de Apresentação
+
+[Assista no YouTube](https://youtu.be/iHQmICyOn4o?si=j1Ee06UmW1_0VUNd)
