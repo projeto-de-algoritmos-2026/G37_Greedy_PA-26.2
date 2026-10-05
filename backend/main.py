@@ -20,6 +20,7 @@ app.add_middleware(
 class RespostaCompressao(BaseModel):
     dados_comprimidos_base64: str
     codigos: dict[str, str]
+    frequencias: dict[str, int]
     bits_de_preenchimento: int
     tamanho_original_bytes: int
     tamanho_comprimido_bytes: int
@@ -40,7 +41,7 @@ class RespostaDescompressao(BaseModel):
 
 @app.post("/comprimir", response_model=RespostaCompressao)
 async def rota_comprimir(arquivo: UploadFile = File(...)):
-    if not arquivo.filename.endswith(".txt"):
+    if not arquivo.filename or not arquivo.filename.lower().endswith(".txt"):
         raise HTTPException(status_code=400, detail="Envie um arquivo .txt")
 
     conteudo_bytes = await arquivo.read()
@@ -61,6 +62,7 @@ async def rota_comprimir(arquivo: UploadFile = File(...)):
     return RespostaCompressao(
         dados_comprimidos_base64=base64.b64encode(resultado.dados_comprimidos).decode("ascii"),
         codigos=resultado.codigos,
+        frequencias=resultado.frequencias,
         bits_de_preenchimento=resultado.bits_de_preenchimento,
         tamanho_original_bytes=resultado.tamanho_original_bytes,
         tamanho_comprimido_bytes=resultado.tamanho_comprimido_bytes,
@@ -72,12 +74,15 @@ async def rota_comprimir(arquivo: UploadFile = File(...)):
 @app.post("/descomprimir", response_model=RespostaDescompressao)
 def rota_descomprimir(pedido: PedidoDescompressao):
     try:
-        dados_comprimidos = base64.b64decode(pedido.dados_comprimidos_base64)
+        dados_comprimidos = base64.b64decode(pedido.dados_comprimidos_base64, validate=True)
     except Exception:
         raise HTTPException(status_code=400, detail="dados_comprimidos_base64 invalido.")
 
     inicio = time.perf_counter()
-    texto = descomprimir(dados_comprimidos, pedido.codigos, pedido.bits_de_preenchimento)
+    try:
+        texto = descomprimir(dados_comprimidos, pedido.codigos, pedido.bits_de_preenchimento)
+    except ValueError as erro:
+        raise HTTPException(status_code=400, detail=str(erro))
     tempo_calculo_ms = (time.perf_counter() - inicio) * 1000
 
     return RespostaDescompressao(texto=texto, tempo_calculo_ms=tempo_calculo_ms)

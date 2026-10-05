@@ -8,6 +8,7 @@ from huffman_tree import construir_arvore, contar_frequencias, gerar_codigos
 class ResultadoCompressao:
     dados_comprimidos: bytes
     codigos: Dict[str, str]
+    frequencias: Dict[str, int]
     bits_de_preenchimento: int
     tamanho_original_bytes: int
     tamanho_comprimido_bytes: int
@@ -41,6 +42,7 @@ def comprimir(texto: str) -> ResultadoCompressao:
     return ResultadoCompressao(
         dados_comprimidos=bytes(dados_comprimidos),
         codigos=codigos,
+        frequencias=frequencias,
         bits_de_preenchimento=bits_de_preenchimento,
         tamanho_original_bytes=len(texto.encode("utf-8")),
         tamanho_comprimido_bytes=len(dados_comprimidos),
@@ -69,5 +71,8 @@ def descomprimir(
         if buffer_atual in codigo_para_caractere:
             texto_decodificado.append(codigo_para_caractere[buffer_atual])
             buffer_atual = ""
+
+    if buffer_atual:
+        raise ValueError("Dados comprimidos nao batem com a tabela de codigos.")
 
     return "".join(texto_decodificado)
